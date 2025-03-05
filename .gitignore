@@ -1,0 +1,16 @@
+# R specific
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Data files (if you want to exclude them)
+# DATA/
+*.csv
+
+# Temporary files
+*.log 
