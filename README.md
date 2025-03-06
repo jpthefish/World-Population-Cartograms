@@ -1,4 +1,4 @@
-# 🌍 World Population Cartogram Visualization
+# 🌍 World Population Cartograms
 
 An interactive visualization showing how our world's population has changed (and is projected to change) from 1000 BC to 2100 AD. This project uses cartograms to represent countries with sizes proportional to their population, offering an intuitive way to understand global demographic shifts and elucidate how countries are progressing through modern demographic transitions. 
 
