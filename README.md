@@ -2,8 +2,6 @@
 
 An interactive visualization showing how our world's population has changed (and is projected to change) from 1000 BC to 2100 AD. This project uses cartograms to represent countries with sizes proportional to their population, offering an intuitive way to understand global demographic events and elucidate how countries are progressing through modern demographic transitions. 
 
-In the present day, these transitions are largely characterized by migration as well as 'a shift from high birth rates and high death rates to lower birth rates and death rates as societies attain more technology, education (especially of women), and economic development,' as hypothesized by theories such as the Demographic Transition Model (DTM) (https://en.wikipedia.org/wiki/Demographic_transition).
-
 ## 🚀 Features
 
 - **Interactive Time Travel**: Navigate through population data from 1000 BC to 2100 AD
@@ -52,6 +50,8 @@ shiny::runApp()
 ## 🖥️ Preview
 
 ![Screenshot 2025-03-06 at 3 15 11 AM](https://github.com/user-attachments/assets/4ad38575-770b-4bf7-ba42-3f83890abf36)
+
+In the present day, demographic transitions are largely characterized by migration as well as 'a shift from high birth rates and high death rates to lower birth rates and death rates as societies attain more technology, education (especially of women), and economic development,' as hypothesized by theories such as the Demographic Transition Model (DTM) (https://en.wikipedia.org/wiki/Demographic_transition).
 
 ## 🔧 Technical Details
 
