@@ -1,6 +1,6 @@
 # 🌍 World Population Cartogram Visualization
 
-An interactive visualization showing how our world's population has changed and is projected to change from 1000 BC to 2100 AD. In this project, I use cartograms to represent countries with sizes proportional to their population, offering an intuitive way to understand global demographic shifts and elucidatehow countries are progressing through modern demographic transitions, largely characterized by migration as well as a shift from high birth rates and high death rates to lower birth rates and death rates as societies attain more technology, education (especially of women), and economic development, as hypothesized by theories such as the Demographic Transition Model (DTM).
+An interactive visualization showing how our world's population has changed (and is projected to change) from 1000 BC to 2100 AD. In this project, I use cartograms to represent countries with sizes proportional to their population, offering an intuitive way to understand global demographic shifts and elucidate how countries are progressing through modern demographic transitions. These transitions are largely characterized by migration as well as a shift from high birth rates and high death rates to lower birth rates and death rates as societies attain more technology, education (especially of women), and economic development, as hypothesized by theories such as the Demographic Transition Model (DTM).
 
 ## 🚀 Features
 
@@ -49,7 +49,7 @@ shiny::runApp()
 
 ## 🖥️ Preview
 
-[Consider adding screenshots or GIFs of your visualization here]
+![Screenshot 2025-03-06 at 3 15 11 AM](https://github.com/user-attachments/assets/4ad38575-770b-4bf7-ba42-3f83890abf36)
 
 ## 🔧 Technical Details
 
