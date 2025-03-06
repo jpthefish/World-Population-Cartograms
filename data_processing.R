@@ -6,12 +6,25 @@ library(tibble)
 
 # Function to load and process UN population data (1950-2100)
 process_un_population_data <- function(un_csv_path) {
+    # Define all variants we want to include
+    all_variants <- c(
+        # Standard variants
+        "Low", "Medium", "High", 
+        # Special variants
+        "Constant fertility", "Instant replacement", "Zero migration", 
+        "Constant mortality", "No change", "Momentum",
+        "Instant replacement zero migration", "No fertility below age 18",
+        "Accelerated ABR decline", "Accelerated ABR decline w/rec.", 
+        # Probabilistic intervals
+        "Median PI", "Upper 80 PI", "Lower 80 PI", "Upper 95 PI", "Lower 95 PI"
+    )
+    
     un_data <- read_csv(un_csv_path, show_col_types = FALSE) %>%
         as_tibble() %>%
         # Filter out rows without ISO codes and regional aggregates
         dplyr::filter(!is.na(ISO3_code)) %>%
         dplyr::filter(LocTypeID == 4) %>%
-        dplyr::filter(Variant %in% c("Low", "Medium", "High")) %>%
+        dplyr::filter(Variant %in% all_variants) %>%
         dplyr::filter(Time %in% c(1950, 2025, 2050, 2100)) %>%
         dplyr::select(ISO3_code, Time, Variant, PopTotal, Location) %>%
         # Pivot to get variants as columns
