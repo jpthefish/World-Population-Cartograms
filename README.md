@@ -1,5 +1,7 @@
 # 🌍 World Population Cartograms
 
+### Interact with the project live on [jpthefish.shinyapps.io](https://jpthefish.shinyapps.io/cartograms/)
+
 An interactive visualization showing how our world's population has changed (and is projected to change) from 1000 BC to 2100 AD. This project uses cartograms to represent countries with sizes proportional to their population, offering an intuitive way to understand global demographic events and elucidate how countries are progressing through modern demographic transitions. 
 
 ## 🚀 Features
