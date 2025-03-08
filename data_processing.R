@@ -25,7 +25,7 @@ process_un_population_data <- function(un_csv_path) {
         dplyr::filter(!is.na(ISO3_code)) %>%
         dplyr::filter(LocTypeID == 4) %>%
         dplyr::filter(Variant %in% all_variants) %>%
-        dplyr::filter(Time %in% c(1950, 2025, 2050, 2100)) %>%
+        dplyr::filter(Time %in% c(-1000, 0, 500, 1000, 1500, 1900, 1950, 2025, 2050, 2100)) %>%
         dplyr::select(ISO3_code, Time, Variant, PopTotal, Location) %>%
         # Pivot to get variants as columns
         tidyr::pivot_wider(

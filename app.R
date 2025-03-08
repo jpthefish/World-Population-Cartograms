@@ -23,7 +23,7 @@ sf::sf_use_s2(FALSE)
 
 # Load data once at startup
 world <- ne_countries(scale = "medium", returnclass = "sf")
-un_data <- process_un_population_data("modified_UN_population_data_1950_to_2100.csv")
+un_data <- process_un_population_data("mergedHistoricalAndProjectionData.csv")
 world_with_pop <- harmonize_country_codes(un_data, world)
 
 # After the package loading section, add these color definitions
@@ -118,18 +118,18 @@ define_regions <- function(world_data) {
   )
   world_data$region[world_data$name %in% southeast_asian_countries] <- "Southeast Asia"
   
-  # Central Asia (now without Tajikistan)
+  # Central Asia (now including Tajikistan)
   central_asian_countries <- c(
-    "Kazakhstan", "Uzbekistan", "Kyrgyzstan", "Turkmenistan"
+    "Kazakhstan", "Uzbekistan", "Kyrgyzstan", "Turkmenistan", "Tajikistan"
   )
   world_data$region[world_data$name %in% central_asian_countries] <- "Central Asia"
   
-  # North Africa & West Asia (renamed from North Africa & Middle East)
+  # North Africa & West Asia (now without Tajikistan)
   nafr_westasia_countries <- c(
     "Morocco", "Algeria", "Tunisia", "Libya", "Egypt", 
     "Israel", "Palestine", "Jordan", "Lebanon", "Syria", "Iraq", "Iran", 
     "Saudi Arabia", "Yemen", "Oman", "United Arab Emirates", "Qatar", "Bahrain", "Kuwait",
-    "Afghanistan", "Tajikistan"
+    "Afghanistan"
   )
   world_data$region[world_data$name %in% nafr_westasia_countries] <- "North Africa & West Asia"
   
@@ -377,7 +377,13 @@ ui <- fluidPage(
         # Map panel
         column(width = 9, class = "map-column",
             div(class = "map-container", style = "margin-top: 0; padding-top: 0;",
-                plotOutput("map", height = "650px")
+                plotOutput("map", 
+                          height = "650px",
+                          hover = hoverOpts(id = "plot_hover", delayType = "debounce", delay = 100)),
+                conditionalPanel(
+                    condition = "input.view == 'Normal Map'",
+                    uiOutput("hover_info")
+                )
             )
         )
     ),
@@ -407,6 +413,59 @@ ui <- fluidPage(
 
 # Server logic
 server <- function(input, output) {
+    
+    # Create a reactive cache for cartograms
+    cartogram_cache <- reactiveVal(list())
+
+    # Function to generate or retrieve cached cartogram
+    get_cartogram <- function(year, variant, color_by) {
+        # Create a unique key for this cartogram
+        cache_key <- paste(year, variant, sep = "_")
+        
+        # Check if we already have this cartogram in cache
+        cached_cartograms <- cartogram_cache()
+        if (cache_key %in% names(cached_cartograms)) {
+            message("Using cached cartogram for ", cache_key)
+            return(cached_cartograms[[cache_key]])
+        }
+        
+        # If not in cache, generate the cartogram
+        message("Generating new cartogram for ", cache_key)
+        
+        # Get population column
+        pop_col <- paste0("year_", year, "_", variant)
+        if(!pop_col %in% names(world_merc)) {
+            pop_col <- paste0("year_", year, "_Medium")
+        }
+        
+        # Generate the cartogram
+        temp_data <- world_merc
+        temp_data[[pop_col]] <- pmax(temp_data[[pop_col]], 1)
+        
+        tryCatch({
+            # Create cartogram with optimized parameters
+            cart <- cartogram_cont(temp_data, 
+                                 weight = pop_col,
+                                 itermax = 38,
+                                 maxSizeError = 0.07,
+                                 prepare = "adjust",
+                                 threshold = 0.007)
+            
+            # Apply smoothing
+            cart <- st_simplify(cart, preserveTopology = TRUE, dTolerance = 1000)
+            cart <- st_make_valid(cart)
+            
+            # Add to cache
+            cached_cartograms <- cartogram_cache()
+            cached_cartograms[[cache_key]] <- cart
+            cartogram_cache(cached_cartograms)
+            
+            return(cart)
+        }, error = function(e) {
+            message("Error generating cartogram: ", e$message)
+            return(world_moll)
+        })
+    }
     
     # Get population column name with fallback
     get_pop_col <- reactive({
@@ -438,7 +497,54 @@ server <- function(input, output) {
         return(col_name)
     })
     
-    # Generate map
+    # Update the hover functionality to only work on the normal map
+
+    # Modify the hover_info renderUI function
+    output$hover_info <- renderUI({
+        # Only show hover info for Normal Map view to improve performance
+        if(input$view != "Normal Map") return(NULL)
+        
+        hover <- input$plot_hover
+        if(is.null(hover)) return(NULL)
+        
+        # Use only the normal map data (world_moll)
+        current_map <- world_moll
+        
+        # Find the country at the hover point
+        point <- st_point(c(hover$x, hover$y))
+        point_sf <- st_sfc(point, crs = st_crs(current_map))
+        
+        # Find which country contains this point
+        country_idx <- st_nearest_feature(point_sf, current_map)
+        
+        if(length(country_idx) > 0) {
+            country <- current_map[country_idx, ]
+            pop_col <- get_pop_col()
+            
+            # Format the population with commas
+            pop_value <- format(country[[pop_col]], big.mark = ",")
+            
+            # Calculate position relative to cursor
+            left_pos <- hover$coords_css$x + 15
+            top_pos <- hover$coords_css$y - 10
+            
+            # Create a tooltip with country name and population that follows the cursor
+            div(
+                style = paste0(
+                    "position: absolute; background-color: white; padding: 8px; ",
+                    "border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.3); ",
+                    "z-index: 1000; font-size: 12px; pointer-events: none; ",
+                    "left: ", left_pos, "px; ",
+                    "top: ", top_pos, "px;"
+                ),
+                strong(country$name),
+                tags$br(),
+                paste0("Population: ", pop_value, " (thousands)")
+            )
+        }
+    })
+    
+    # Update the map rendering to use disk caching
     output$map <- renderPlot({
         # Get population column for selected year and variant
         pop_col <- get_pop_col()
@@ -446,21 +552,24 @@ server <- function(input, output) {
         if(input$view == "Normal Map") {
             current_map <- world_moll
         } else {
-            tryCatch({
-                temp_data <- world_merc
-                temp_data[[pop_col]] <- pmax(temp_data[[pop_col]], 0.1)
-                
-                current_map <- cartogram_cont(temp_data, 
-                                           weight = pop_col,
-                                           itermax = 38,
-                                           threshold = 0.006)
-                
-                current_map <- st_make_valid(current_map)
-                
-            }, error = function(e) {
-                message("Error in cartogram generation: ", e$message)
-                current_map <- world_moll
-            })
+            # Get cartogram from disk cache or generate and cache it
+            current_map <- get_cartogram_with_disk_cache(
+                input$year, 
+                if(as.numeric(input$year) > 1950) input$variant else "Medium",
+                input$color_by
+            )
+        }
+        
+        # Calculate total world population
+        world_total <- sum(current_map[[pop_col]], na.rm = TRUE)
+        formatted_total <- format(world_total, big.mark = ",")
+        
+        # Format year display
+        year_num <- as.numeric(input$year)
+        if(year_num < 0) {
+            year_display <- paste0(abs(year_num), " BC")
+        } else {
+            year_display <- input$year
         }
         
         # Create plot with different fill based on color_by selection
@@ -473,13 +582,6 @@ server <- function(input, output) {
                 scale_fill_viridis_c(
                     name = "Population (thousands)",
                     labels = scales::comma,
-                    # Use a more sensitive transformation
-                    # trans = "log10",
-                    # Adjust breaks for better distribution
-                    # breaks = scales::breaks_log(n = 3),
-                    # Use the plasma variant for better differentiation
-                    # option = "plasma",
-                    # Adjust limits to focus on the meaningful range
                     guide = guide_colorbar(
                         barwidth = 15,
                         barheight = 0.5,
@@ -501,11 +603,20 @@ server <- function(input, output) {
                 )
         }
         
+        # Create title with world population total
+        if(year_num <= 1950) {
+            # Historical years
+            title_text <- paste0("World Population, ", year_display, ": ", formatted_total, " (thousands)")
+        } else {
+            # Projection years
+            title_text <- paste0("World Population, ", year_display, ": ", formatted_total, 
+                               " (thousands, ", input$variant, " projection)")
+        }
+        
         # Add common theme elements
-        p + theme_void() +
+        p <- p + theme_void() +
             labs(
-                title = paste("World Population -", input$year, 
-                            if(input$year != "1950") paste0(" (", input$variant, " projection)") else ""),
+                title = title_text,
                 subtitle = if(input$view == "Population Cartogram") 
                     "Country sizes are proportional to population" else "Mollweide equal-area projection"
             ) +
@@ -525,6 +636,9 @@ server <- function(input, output) {
                 ),
                 legend.position = "bottom"
             )
+        
+        # Important: Add coord_sf() to maintain the coordinate system for hover functionality
+        p + coord_sf()
     })
     
     # Remove the population_info output and add top_countries output
@@ -629,6 +743,33 @@ server <- function(input, output) {
         
         return(totals_text)
     })
+
+    # Create cache directory if it doesn't exist
+    if(!dir.exists("cartogram_cache")) {
+        dir.create("cartogram_cache")
+    }
+
+    # Function to get cartogram with disk caching
+    get_cartogram_with_disk_cache <- function(year, variant, color_by) {
+        # Create a unique key for this cartogram
+        cache_key <- paste(year, variant, sep = "_")
+        cache_file <- file.path("cartogram_cache", paste0(cache_key, ".rds"))
+        
+        # Check if we have this cartogram on disk
+        if(file.exists(cache_file)) {
+            message("Loading cartogram from disk: ", cache_file)
+            return(readRDS(cache_file))
+        }
+        
+        # Generate the cartogram
+        cart <- get_cartogram(year, variant, color_by)
+        
+        # Save to disk for future use
+        message("Saving cartogram to disk: ", cache_file)
+        saveRDS(cart, cache_file)
+        
+        return(cart)
+    }
 }
 
 # Run the app
