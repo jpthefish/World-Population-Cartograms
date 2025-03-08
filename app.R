@@ -1,5 +1,5 @@
 # Set PROJ_LIB environment variable
-Sys.setenv(PROJ_LIB = "/opt/homebrew/opt/proj/share/proj")
+# Sys.setenv(PROJ_LIB = "/opt/homebrew/opt/proj/share/proj")
 
 # Load required packages
 library(shiny)
@@ -14,6 +14,9 @@ library(rnaturalearth)
 library(rnaturalearthdata)
 library(ggplot2)
 library(viridis)
+
+# Source the data processing functions
+source("data_processing.R")
 
 # Set tmap options
 tmap_options(check.and.fix = TRUE)

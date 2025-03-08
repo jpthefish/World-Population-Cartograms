@@ -1,0 +1,10 @@
+name: cartograms
+title:
+username: jpthefish
+account: jpthefish
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14190702
+bundleId: 9910970
+url: https://jpthefish.shinyapps.io/cartograms/
+version: 1
