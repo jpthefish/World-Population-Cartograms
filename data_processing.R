@@ -57,12 +57,7 @@ process_historical_data <- function(historical_paths) {
 
 # Function to match country codes between population data and map data
 harmonize_country_codes <- function(population_data, map_data) {
-    # Print initial counts
-    message("Initial counts:")
-    message("Population data rows: ", nrow(population_data))
-    message("Map data rows: ", nrow(map_data))
-    
-    # Fix known ISO code issues
+    # Fix known ISO code issues - only fix what's needed
     map_data$iso_a3[map_data$name == "France"] <- "FRA"
     map_data$iso_a3[map_data$name == "Norway"] <- "NOR"
     map_data$iso_a3[map_data$name == "United States of America"] <- "USA"
@@ -82,29 +77,11 @@ harmonize_country_codes <- function(population_data, map_data) {
     matched_data <- dplyr::left_join(map_data, population_data, 
                                     by = c("iso_a3" = "ISO3_code"))
     
-    # Print matching diagnostics
-    message("\nMatching diagnostics:")
-    message("Matched rows: ", nrow(matched_data))
-    message("Countries with missing population data:")
-    missing_pop <- matched_data[is.na(matched_data[[grep("year_", names(matched_data), value = TRUE)[1]]]), ]
-    print(data.frame(name = missing_pop$name, iso_a3 = missing_pop$iso_a3))
-    
     # Remove rows with missing population data
     matched_data <- matched_data[!is.na(matched_data[[grep("year_", names(matched_data), value = TRUE)[1]]]), ]
     
     # Ensure geometry validity
     matched_data <- st_make_valid(matched_data)
-    
-    # Print final example values
-    message("\nExample population values:")
-    example_countries <- c("United States of America", "France", "China", "India", "Egypt")
-    example_data <- matched_data[matched_data$name %in% example_countries, ]
-    print(data.frame(
-        name = example_data$name,
-        iso_a3 = example_data$iso_a3,
-        continent = example_data$continent,
-        pop_2025 = example_data[[grep("2025_Medium", names(matched_data), value = TRUE)]]
-    ))
     
     return(matched_data)
 } 

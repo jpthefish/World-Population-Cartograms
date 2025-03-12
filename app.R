@@ -1,7 +1,7 @@
-# Set PROJ_LIB environment variable
+# Remove commented out PROJ_LIB line since it's not needed on the server
 # Sys.setenv(PROJ_LIB = "/opt/homebrew/opt/proj/share/proj")
 
-# Load required packages
+# Optimize package loading - only load what's actually needed
 library(shiny)
 library(dplyr)
 library(tidyr)
@@ -9,36 +9,28 @@ library(readr)
 library(tibble)
 library(sf)
 library(cartogram)
+library(ggplot2)
+library(viridis)
+# tmap is only used for tmap_options and tmap_mode, consider if you need it
 library(tmap)
 library(rnaturalearth)
 library(rnaturalearthdata)
-library(ggplot2)
-library(viridis)
 
 # Source the data processing functions
 source("data_processing.R")
 
 # Set tmap options
 tmap_options(check.and.fix = TRUE)
-tmap_mode("plot")  # Changed to plot mode for static maps
-# Disable s2 geometry globally for this session
+tmap_mode("plot")
 sf::sf_use_s2(FALSE)
+
+# Remove unused continent_colors variable
+# continent_colors <- c(...) - This isn't used anywhere
 
 # Load data once at startup
 world <- ne_countries(scale = "medium", returnclass = "sf")
 un_data <- process_un_population_data("mergedHistoricalAndProjectionData.csv")
 world_with_pop <- harmonize_country_codes(un_data, world)
-
-# After the package loading section, add these color definitions
-continent_colors <- c(
-    "North America" = "#E41A1C",
-    "South America" = "#377EB8",
-    "Europe" = "#4DAF4A",
-    "Africa" = "#984EA3",
-    "Asia" = "#FF7F00",
-    "Oceania" = "#FFFF33",
-    "Antarctica" = "#A65628"
-)
 
 # Update the region colors with the new name
 region_colors <- c(
@@ -188,8 +180,9 @@ world_merc <- define_regions(world_merc)
 
 # UI
 ui <- fluidPage(
-    # Keep the existing CSS but add some layout improvements
+    # Add viewport meta tag for proper mobile scaling
     tags$head(
+        tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0"),
         tags$style(HTML("
             @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Roboto+Mono:wght@400&display=swap');
             
@@ -215,12 +208,12 @@ ui <- fluidPage(
             
             /* Improved styling for statistics boxes */
             pre {
-                font-family: 'Roboto Mono', monospace;
+                font-family: 'JetBrains Mono', 'Roboto Mono', 'Consolas', monospace;
                 font-size: 13px;
                 line-height: 1.5;
                 background-color: #f8f9fa;
                 border-radius: 6px;
-                padding: 15px;
+                padding: 10px;
                 border: 1px solid #e9ecef;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.05);
                 white-space: pre-wrap;
@@ -228,21 +221,25 @@ ui <- fluidPage(
                 overflow-y: auto;
             }
             
+            /* Import JetBrains Mono for better monospace display */
+            @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+            
             /* Highlight the world total */
             pre:first-line {
-                font-weight: bold;
+                font-weight: 500;
                 color: #333;
                 font-size: 14px;
             }
             
             /* Layout styles */
             .map-container {
-                min-height: 600px;
-                padding-top: 0;
-                margin-top: 0;
+                min-height: 400px;
+                padding: 0;
+                margin: 0;
                 border-radius: 6px;
                 overflow: hidden;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                width: 100%;
             }
             
             .stats-container {
@@ -262,21 +259,54 @@ ui <- fluidPage(
                 box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             }
             
+            /* Responsive layout styles */
+            @media (max-width: 768px) {
+                .main-layout {
+                    flex-direction: column;
+                }
+                
+                .sidebar-column, .map-column {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    flex: 0 0 100% !important;
+                }
+                
+                .map-container {
+                    height: 400px !important;
+                    margin-bottom: 20px;
+                }
+                
+                .stats-box {
+                    min-width: 100%;
+                }
+                
+                h1 {
+                    font-size: 20px !important;
+                }
+                
+                .well {
+                    margin-bottom: 20px;
+                }
+            }
+            
             /* Alignment styles */
-            .row {
+            .main-layout {
                 display: flex;
+                flex-wrap: wrap;
                 align-items: flex-start;
+                margin: 0 -15px;
             }
             
             .sidebar-column, .map-column {
-                margin-top: 0;
-                padding-top: 0;
+                padding: 0 15px;
+                box-sizing: border-box;
             }
             
             .well {
                 margin-top: 0;
                 border-radius: 6px;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                padding: 15px;
             }
             
             /* Full-width container for stats */
@@ -308,20 +338,92 @@ ui <- fluidPage(
             body {
                 background-color: #f5f7fa;
             }
+            
+            /* Fix map height issues */
+            #map {
+                width: 100% !important;
+                height: 100% !important;
+            }
+            
+            /* Adjust map height based on viewport width */
+            @media (min-width: 992px) {
+                .map-container {
+                    height: 650px !important;
+                }
+            }
+            
+            @media (min-width: 768px) and (max-width: 991px) {
+                .map-container {
+                    height: 500px !important;
+                }
+            }
+            
+            /* Ensure minimum dimensions for the plot */
+            .map-container {
+                min-height: 300px !important;
+                min-width: 200px !important;
+            }
+            
+            /* Responsive font size for statistics */
+            @media (max-width: 480px) {
+                .main-title h1 {
+                    font-size: 18px !important;
+                }
+                
+                .section-title {
+                    font-size: 16px !important;
+                }
+                
+                .selectize-input {
+                    font-size: 14px;
+                }
+                
+                .stats-box {
+                    padding: 10px;
+                }
+                
+                pre {
+                    font-size: 11px;
+                }
+            }
+            
+            /* Fix for plot rendering */
+            .shiny-plot-output {
+                min-height: 300px;
+                min-width: 200px;
+            }
+            
+            /* Copyright footer styling */
+            .footer {
+                text-align: center;
+                padding: 20px 0;
+                margin-top: 30px;
+                color: #666;
+                font-size: 12px;
+                border-top: 1px solid #e0e0e0;
+            }
+            
+            /* Add more bottom space to the stats container */
+            .stats-container {
+                margin-bottom: 20px;
+            }
         "))
     ),
     
     # Use custom class for title
     div(class = "main-title",
         h1("World Population Cartograms: Visualizing Humanity from 1000 BC into the Future", 
-           align = "center", style = "font-size: 24px;")
+           align = "center", style = "font-size: 24px;"),
+        p(HTML("For more information on the datasets and methods used in this application, please visit the <a href='https://github.com/jpthefish/World-Population-Cartograms/' target='_blank'>documentation page on GitHub</a>."), 
+          align = "center", 
+          style = "margin-top: 10px; color: #666; font-size: 14px;")
     ),
     
-    # Main layout with sidebar and map
+    # Main layout with sidebar and map - using custom class for responsive layout
     fluidRow(
-        # Sidebar panel
-        column(width = 3, class = "sidebar-column",
-            div(class = "well", style = "margin-top: 0; padding-top: 15px;",
+        # Sidebar panel - will stack on mobile
+        column(width = 12, class = "col-md-3 col-sm-12",
+            div(class = "well",
                 selectInput("year", "Select Year:",
                            choices = c(
                                # Historical years
@@ -378,11 +480,13 @@ ui <- fluidPage(
         ),
         
         # Map panel
-        column(width = 9, class = "map-column",
-            div(class = "map-container", style = "margin-top: 0; padding-top: 0;",
+        column(width = 12, class = "col-md-9 col-sm-12",
+            div(class = "map-container",
                 plotOutput("map", 
-                          height = "650px",
+                          height = "500px", # Fixed height instead of 100%
+                          width = "100%",
                           hover = hoverOpts(id = "plot_hover", delayType = "debounce", delay = 100)),
+                # Add back the hover info conditional panel
                 conditionalPanel(
                     condition = "input.view == 'Normal Map'",
                     uiOutput("hover_info")
@@ -410,6 +514,11 @@ ui <- fluidPage(
                 h4("Top 20 Most Populous Countries (thousands)", class = "section-title"),
                 verbatimTextOutput("top_countries")
             )
+        ),
+        
+        # Add copyright footer
+        div(class = "footer",
+            HTML(paste0("© ", format(Sys.Date(), "%Y"), " Joey Paul Eli Haynes"))
         )
     )
 )
@@ -420,7 +529,7 @@ server <- function(input, output) {
     # Create a reactive cache for cartograms
     cartogram_cache <- reactiveVal(list())
 
-    # Function to generate or retrieve cached cartogram
+    # Optimize cartogram generation parameters
     get_cartogram <- function(year, variant, color_by) {
         # Create a unique key for this cartogram
         cache_key <- paste(year, variant, sep = "_")
@@ -454,7 +563,7 @@ server <- function(input, output) {
                                  prepare = "adjust",
                                  threshold = 0.007)
             
-            # Apply smoothing
+            # Simplify geometry for better performance
             cart <- st_simplify(cart, preserveTopology = TRUE, dTolerance = 1000)
             cart <- st_make_valid(cart)
             
@@ -504,7 +613,7 @@ server <- function(input, output) {
 
     # Modify the hover_info renderUI function
     output$hover_info <- renderUI({
-        # Only show hover info for Normal Map view to improve performance
+        # Only show hover info for Normal Map view
         if(input$view != "Normal Map") return(NULL)
         
         hover <- input$plot_hover
@@ -656,6 +765,9 @@ server <- function(input, output) {
             population = country_data[[pop_col]]
         )
         
+        # Rename "United States of America" to "United States"
+        country_data$name <- gsub("United States of America", "United States", country_data$name)
+        
         # Calculate world total for percentages
         world_total <- sum(country_data$population, na.rm = TRUE)
         
@@ -681,22 +793,35 @@ server <- function(input, output) {
                                "═════════════════════════════════════\n\n")
         }
         
-        # Add each country with its rank and percentage, better formatted
+        # Add each country with its rank and percentage, better formatted for responsive design
         country_text <- ""
         for(i in 1:nrow(top_20)) {
             # Format with fixed-width for better alignment
             rank_num <- sprintf("%2d. ", i)
-            country_name <- sprintf("%-25s", paste0(top_20$name[i], ":"))
+            
+            # Determine if we need to use a shorter country name format for small screens
+            country_name <- top_20$name[i]
+            if(nchar(country_name) > 20) {
+                # Truncate very long names
+                country_name <- paste0(substr(country_name, 1, 18), "...")
+            }
+            
+            # Format the country name with colon
+            country_name_formatted <- sprintf("%-22s", paste0(country_name, ":"))
+            
+            # Format population with commas
             pop_value <- format(top_20$population[i], big.mark=",")
-            pct_value <- sprintf("(%5.1f%%)", top_20$percentage[i])
+            
+            # Format percentage on a new line for better responsive layout
+            pct_value <- sprintf("\n    (%5.1f%%)", top_20$percentage[i])
             
             country_text <- paste0(
                 country_text,
                 rank_num, 
-                country_name, " ", 
-                pop_value, " ", 
+                country_name_formatted, " ", 
+                pop_value, 
                 pct_value,
-                "\n"
+                "\n\n"
             )
         }
         
@@ -731,16 +856,18 @@ server <- function(input, output) {
             percentage <- (region_totals$total_population[i] / world_total) * 100
             
             # Format with fixed-width for better alignment
-            region_name <- sprintf("%-25s", paste0(region_totals$region[i], ":"))
+            region_name <- sprintf("%-22s", paste0(region_totals$region[i], ":"))
             pop_value <- format(region_totals$total_population[i], big.mark=",")
-            pct_value <- sprintf("(%5.1f%%)", percentage)
+            
+            # Put percentage on a new line for better responsive layout
+            pct_value <- sprintf("\n    (%5.1f%%)", percentage)
             
             totals_text <- paste0(
                 totals_text,
                 region_name, " ", 
-                pop_value, " ", 
+                pop_value, 
                 pct_value,
-                "\n"
+                "\n\n"
             )
         }
         
@@ -773,6 +900,10 @@ server <- function(input, output) {
         
         return(cart)
     }
+
+    # Add this near the beginning of your server function
+    options(shiny.useragg = TRUE)  # Use ragg for rendering instead of Quartz
+    options(shiny.minwidth = 200)  # Set minimum width for plots
 }
 
 # Run the app
