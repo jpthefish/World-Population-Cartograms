@@ -4,6 +4,12 @@
 
 An interactive visualization showing how our world's population has changed (and is projected to change) from 1000 BC to 2100 AD. This project uses cartograms to represent countries with sizes proportional to their population, offering an intuitive way to understand global demographic events and elucidate how countries are progressing through modern demographic transitions. 
 
+## 🖥️ Preview
+
+![Screenshot 2025-03-12 at 3 10 08 AM](https://github.com/user-attachments/assets/df202331-8525-409a-b1de-3dc01c2fae85)
+
+In the present day, demographic transitions are largely characterized by migration as well as a shift from high birth rates and high death rates to lower birth rates and death rates as societies attain more technology, education (especially of women), and economic development, as elucidated by theories such as the Demographic Transition Model (DTM) (https://en.wikipedia.org/wiki/Demographic_transition).
+
 ## 🚀 Features
 
 - **Interactive Time Travel**: Navigate through population data from 1000 BC to 2100 AD
@@ -17,8 +23,9 @@ An interactive visualization showing how our world's population has changed (and
 ## 📊 Data Sources
 
 This visualization combines data from:
-- Historical estimates by HYDE (v3.3)
+- Historical population estimates by HYDE (v3.3)
 - UN Population Division (1950-2100 projections)
+- IHME Population Forecasts (2017-2100 projections)
 - Natural Earth (geographical data)
 
 ## 🛠️ Installation
@@ -49,15 +56,9 @@ Run the Shiny app:
 R
 shiny::runApp()
 
-## 🖥️ Preview
-
-![Screenshot 2025-03-06 at 3 15 11 AM](https://github.com/user-attachments/assets/4ad38575-770b-4bf7-ba42-3f83890abf36)
-
-In the present day, demographic transitions are largely characterized by migration as well as 'a shift from high birth rates and high death rates to lower birth rates and death rates as societies attain more technology, education (especially of women), and economic development,' as hypothesized by theories such as the Demographic Transition Model (DTM) (https://en.wikipedia.org/wiki/Demographic_transition).
-
 ## 🔧 Technical Details
 
-The visualization uses several sophisticated techniques:
+The visualization entails several techniques:
 - **Cartogram Generation**: Density-equalizing algorithm to maintain topology while adjusting areas
 - **Equal-area Projection**: Mollweide projection for accurate area representation
 - **Dynamic Rendering**: Real-time cartogram updates as parameters change
@@ -82,5 +83,6 @@ Contributions are welcome! Feel free to:
 ## 🌟 Acknowledgments
 
 - Comprehensive population data (HYDE (2023); Gapminder (2022); UN WPP (2024) – with major processing by Our World in Data. “Population” [dataset]. PBL Netherlands Environmental Assessment Agency, “History Database of the Global Environment 3.3”; Gapminder, “Population v7”; United Nations, “World Population Prospects”; Gapminder, “Systema Globalis” [original data]. Retrieved March 6, 2025 from https://ourworldindata.org/grapher/population)
+- Institute for Health Metrics and Evaluation (IHME). Population Forecasting. Seattle, WA: IHME, University of Washington, 2020. Available from https://vizhub.healthdata.org/population-forecast/(link is external). (Retrieved March 6 2025)
 - Natural Earth for detailed geographical data
 - R Spatial community for excellent tools and documentation
