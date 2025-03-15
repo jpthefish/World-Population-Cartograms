@@ -482,11 +482,8 @@ ui <- fluidPage(
                           height = "500px", # Fixed height instead of 100%
                           width = "100%",
                           hover = hoverOpts(id = "plot_hover", delayType = "debounce", delay = 100)),
-                # Add back the hover info conditional panel
-                conditionalPanel(
-                    condition = "input.view == 'Normal Map'",
-                    uiOutput("hover_info")
-                )
+                # Remove the conditional panel restriction so hover works on both map types
+                uiOutput("hover_info")
             )
         )
     ),
@@ -605,18 +602,22 @@ server <- function(input, output) {
         return(col_name)
     })
     
-    # Update the hover functionality to only work on the normal map
-
-    # Modify the hover_info renderUI function
+    # Modify the hover_info renderUI function to work with both map types
     output$hover_info <- renderUI({
-        # Only show hover info for Normal Map view
-        if(input$view != "Normal Map") return(NULL)
-        
         hover <- input$plot_hover
         if(is.null(hover)) return(NULL)
         
-        # Use only the normal map data (world_moll)
-        current_map <- world_moll
+        # Use the appropriate map data based on the view type
+        if(input$view == "Normal Map") {
+            current_map <- world_moll
+        } else {
+            # For cartogram view, use the cached cartogram
+            current_map <- get_cartogram_with_disk_cache(
+                input$year, 
+                if(as.numeric(input$year) > 1950) input$variant else "Medium",
+                input$color_by
+            )
+        }
         
         # Find the country at the hover point
         point <- st_point(c(hover$x, hover$y))
