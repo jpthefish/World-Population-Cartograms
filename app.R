@@ -427,37 +427,33 @@ ui <- fluidPage(
                 selectInput("year", "Select Year:",
                            choices = c(
                                # Historical years
-                               "-1000" = "-1000", # 1000 BC
-                               "0" = "0",         # 0 AD
-                               "500" = "500",     # 500 AD
-                               "1000" = "1000",   # 1000 AD
-                               "1500" = "1500",   # 1500 AD
-                               "1900" = "1900",   # 1900 AD
+                               "1000 B.C." = "-1000", # 1000 BC
+                               "1 A.D." = "0",        # 0 AD
+                               "500 A.D." = "500",    # 500 AD
+                               "1000 A.D." = "1000",  # 1000 AD
+                               "1500 A.D." = "1500",  # 1500 AD
+                               "1900 A.D." = "1900",  # 1900 AD
                                # Modern years
-                               "1950" = "1950",
+                               "1950 A.D." = "1950",
                                "2025" = "2025",
-                               "2050" = "2050",
-                               "2100" = "2100"
+                               "2050 (Projection)" = "2050",
+                               "2100 (Projection)" = "2100"
                            ),
                            selected = "2025"),
                 
                 # Only show variant selector for years after 1950
                 conditionalPanel(
-                    condition = "parseInt(input.year) > 1950",
+                    condition = "parseInt(input.year) > 2025",
                     selectInput("variant", "Population Projection:",
                               choices = c(
                                   # Standard variants
-                                  "Low", "Medium", "High", 
+                                  "IHME reference pace", "IHME sustainable development goals (SDG) pace", "Low", "Medium", "High", 
                                   # Special variants
                                   "Constant fertility", "Instant replacement", "Zero migration", 
-                                  "Constant mortality", "No change", "Momentum",
-                                  "Instant replacement zero migration", "No fertility below age 18",
-                                  "Accelerated ABR decline", "Accelerated ABR decline w/rec.", 
-                                  # Probabilistic intervals
-                                  "Median PI", "Upper 80 PI", "Lower 80 PI", "Upper 95 PI", "Lower 95 PI"
+                                  "Constant mortality", "Instant replacement zero migration"
                               ),
                               selected = "Medium"),
-                    helpText("Different projection variants available for future years")
+                    helpText("Different projection variants available from the UN Population Division (2024) and IHME Population Forecasts (2020)")
                 ),
                 
                 selectInput("view", "View Type:",
@@ -470,10 +466,10 @@ ui <- fluidPage(
                 hr(),
                 conditionalPanel(
                     condition = "parseInt(input.year) <= 1950",
-                    helpText("Historical data shown for this year")
+                    helpText("Historical data shown for this year (estimates from HYDE, v 3.3)")
                 ),
                 conditionalPanel(
-                    condition = "parseInt(input.year) > 1950",
+                    condition = "parseInt(input.year) > 2025",
                     helpText("Projection data shown for this year")
                 )
             )

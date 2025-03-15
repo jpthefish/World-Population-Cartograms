@@ -9,14 +9,10 @@ process_un_population_data <- function(un_csv_path) {
     # Define all variants we want to include
     all_variants <- c(
         # Standard variants
-        "Low", "Medium", "High", 
+        "IHME reference pace", "IHME sustainable development goals (SDG) pace", "Low", "Medium", "High", 
         # Special variants
         "Constant fertility", "Instant replacement", "Zero migration", 
-        "Constant mortality", "No change", "Momentum",
-        "Instant replacement zero migration", "No fertility below age 18",
-        "Accelerated ABR decline", "Accelerated ABR decline w/rec.", 
-        # Probabilistic intervals
-        "Median PI", "Upper 80 PI", "Lower 80 PI", "Upper 95 PI", "Lower 95 PI"
+        "Constant mortality", "Instant replacement zero migration"
     )
     
     un_data <- read_csv(un_csv_path, show_col_types = FALSE) %>%
